@@ -29,10 +29,10 @@ YDL_OPTIONS = {
     'prefer_ffmpeg': True,
 }
 
-# FFmpeg options for maximum quality streaming with improved clarity
+# FFmpeg options for maximum quality streaming with bass boost
 FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn -b:a 320k -ar 48000 -ac 2'
+    'options': '-vn -af "bass=g=8:f=100" -b:a 320k -ar 48000 -ac 2'
 }
 
 intents = discord.Intents.default()
