@@ -515,17 +515,22 @@ async def slash_leave(interaction: discord.Interaction):
 @tree.command(name="play", description="Play a song from YouTube or other sources")
 async def slash_play(interaction: discord.Interaction, query: str):
     """Slash command to play music"""
+    # Defer response IMMEDIATELY (must be within 3 seconds)
+    try:
+        await interaction.response.defer()
+    except discord.errors.NotFound:
+        # Interaction already expired, try to send followup
+        await interaction.followup.send("⏱️ Interaction expired. Please try the command again.", ephemeral=True)
+        return
+    
     if not interaction.user.voice:
-        await interaction.response.send_message("You need to be in a voice channel to use this command!", ephemeral=True)
+        await interaction.followup.send("You need to be in a voice channel to use this command!", ephemeral=True)
         return
     
     # Join voice channel if not already connected
     if not music_player.voice_client or not music_player.voice_client.is_connected():
         channel = interaction.user.voice.channel
         await music_player.join_voice_channel(channel)
-    
-    # Defer response (slash commands need immediate response)
-    await interaction.response.defer()
     
     try:
         # Extract video info
