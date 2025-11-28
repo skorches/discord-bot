@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  discord-bot:
+    build: .
+    container_name: discord-music-bot
+    restart: unless-stopped
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_PREFIX=${DISCORD_PREFIX:-!}
+    # Optional: Uncomment to mount logs directory
+    # volumes:
+    #   - ./logs:/app/logs
+    # Health check (optional)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
