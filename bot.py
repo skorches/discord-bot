@@ -21,7 +21,7 @@ YDL_OPTIONS = {
     'logtostderr': False,
     'quiet': True,
     'no_warnings': True,
-    'default_search': 'auto',
+    'default_search': 'ytsearch',
     'source_address': '0.0.0.0',
     # Get the best quality audio stream URL directly
     'extract_flat': False,
