@@ -14,7 +14,7 @@ PREFIX = os.getenv('DISCORD_PREFIX', '!')
 
 # yt-dlp options for high-quality audio streaming
 YDL_OPTIONS = {
-    'format': 'bestaudio/best',
+    'format': 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
     'noplaylist': True,
     'nocheckcertificate': True,
     'ignoreerrors': False,
@@ -25,12 +25,14 @@ YDL_OPTIONS = {
     'source_address': '0.0.0.0',
     # Get the best quality audio stream URL directly
     'extract_flat': False,
+    # Prefer higher quality audio formats
+    'prefer_ffmpeg': True,
 }
 
-# FFmpeg options for maximum quality streaming
+# FFmpeg options for maximum quality streaming with improved clarity
 FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn -b:a 320k -ar 48000'
+    'options': '-vn -b:a 320k -ar 48000 -ac 2'
 }
 
 intents = discord.Intents.default()
