@@ -22,11 +22,11 @@ nano .env
 
 Add this content (replace with your NEW token):
 ```env
-DISCORD_TOKEN=MTQ0MzkyODM4NzgxODM2MDgzNA.GHWpM_.zW10p-vEeGFgBEx7lXYyqVH1Gm13-_ZteVD138
+DISCORD_TOKEN=your_new_token_here
 DISCORD_PREFIX=!
 ```
 
-**Replace the token above with your NEW token from Step 1!**
+**Replace `your_new_token_here` with the NEW token from Step 1!**
 
 Save and exit (Ctrl+X, then Y, then Enter in nano).
 

@@ -37,7 +37,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.voice_states = True
 
-bot = commands.Bot(command_prefix=PREFIX, intents=intents)
+# Disable default help command so we can use our custom one
+bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 tree = bot.tree  # Slash command tree
 
 

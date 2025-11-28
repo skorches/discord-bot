@@ -35,7 +35,7 @@ DISCORD_PREFIX=!
 
 **Example:**
 ```env
-DISCORD_TOKEN=MTQ0MzkyODM4NzgxODM2MDgzNA.GHWpM_.zW10p-vEeGFgBEx7lXYyqVH1Gm13-_ZteVD138
+DISCORD_TOKEN=your_actual_token_here
 DISCORD_PREFIX=!
 ```
 

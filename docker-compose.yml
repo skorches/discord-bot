@@ -1,12 +1,11 @@
-version: '3.8'
-
 services:
   discord-bot:
     build: .
     container_name: discord-music-bot
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      - DISCORD_TOKEN=${DISCORD_TOKEN}
       - DISCORD_PREFIX=${DISCORD_PREFIX:-!}
     # Optional: Uncomment to mount logs directory
     # volumes:
