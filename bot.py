@@ -21,7 +21,7 @@ YDL_OPTIONS = {
     'logtostderr': False,
     'quiet': True,
     'no_warnings': True,
-    'default_search': 'ytsearch',
+    'default_search': 'ytmsearch',
     'source_address': '0.0.0.0',
     # Get the best quality audio stream URL directly
     'extract_flat': False,
@@ -49,6 +49,7 @@ class MusicPlayer:
         self.voice_client = None
         self.is_playing = False
         self.is_paused = False
+        self.control_view = None  # Store the current control view
 
     async def join_voice_channel(self, channel):
         """Join a voice channel"""
@@ -123,13 +124,99 @@ class MusicPlayer:
 music_player = MusicPlayer()
 
 
+# Music Player Control Buttons
+class MusicPlayerControls(discord.ui.View):
+    def __init__(self, timeout=300):
+        super().__init__(timeout=timeout)
+        self.control_message = None
+    
+    async def update_buttons(self):
+        """Update button states based on player status"""
+        # Update play/pause button
+        if music_player.is_paused:
+            self.play_pause_button.emoji = "▶️"
+            self.play_pause_button.label = "Resume"
+        else:
+            self.play_pause_button.emoji = "⏸️"
+            self.play_pause_button.label = "Pause"
+        
+        # Enable/disable buttons based on state
+        has_music = music_player.current is not None
+        self.play_pause_button.disabled = not has_music
+        self.stop_button.disabled = not has_music
+        self.next_button.disabled = len(music_player.queue) == 0
+        self.previous_button.disabled = True  # Previous not implemented yet
+    
+    @discord.ui.button(emoji="⏮️", style=discord.ButtonStyle.secondary, label="Previous")
+    async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Go to previous song (not implemented - would need history)"""
+        await interaction.response.send_message("⏮️ Previous song feature not available yet", ephemeral=True)
+    
+    @discord.ui.button(emoji="⏸️", style=discord.ButtonStyle.primary, label="Pause")
+    async def play_pause_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Toggle play/pause"""
+        if music_player.is_paused:
+            music_player.resume()
+            await interaction.response.send_message("▶️ Resumed", ephemeral=True)
+        elif music_player.voice_client and music_player.voice_client.is_playing():
+            music_player.pause()
+            await interaction.response.send_message("⏸️ Paused", ephemeral=True)
+        else:
+            await interaction.response.send_message("Nothing is currently playing", ephemeral=True)
+            return
+        
+        # Update button state
+        await self.update_buttons()
+        if self.control_message:
+            try:
+                await self.control_message.edit(view=self)
+            except:
+                pass
+    
+    @discord.ui.button(emoji="⏹️", style=discord.ButtonStyle.danger, label="Stop")
+    async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Stop playback"""
+        music_player.stop()
+        await interaction.response.send_message("⏹️ Stopped", ephemeral=True)
+        
+        # Update button state
+        await self.update_buttons()
+        if self.control_message:
+            try:
+                await self.control_message.edit(view=self)
+            except:
+                pass
+    
+    @discord.ui.button(emoji="⏭️", style=discord.ButtonStyle.secondary, label="Next")
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Skip to next song"""
+        if music_player.voice_client and music_player.voice_client.is_playing():
+            music_player.voice_client.stop()
+            await interaction.response.send_message("⏭️ Skipped", ephemeral=True)
+        elif len(music_player.queue) > 0:
+            await music_player.play_next()
+            await interaction.response.send_message("⏭️ Playing next song", ephemeral=True)
+        else:
+            await interaction.response.send_message("No songs in queue", ephemeral=True)
+            return
+        
+        # Update button state
+        await self.update_buttons()
+        if self.control_message:
+            try:
+                await self.control_message.edit(view=self)
+            except:
+                pass
+
+
 def get_video_info(query):
     """Extract video information using yt-dlp"""
     with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
         try:
             # If it's not a URL, treat it as a search query
-            if not query.startswith(('http://', 'https://', 'www.')):
-                query = f"ytsearch:{query}"
+            if not query.startswith(('http://', 'https://', 'www.', 'music.youtube.com')):
+                # Use YouTube Music search for better quality and full-length tracks
+                query = f"ytmsearch:{query}"
             
             info = ydl.extract_info(query, download=False)
             
@@ -244,18 +331,32 @@ async def play(ctx, *, query):
         minutes, seconds = divmod(duration, 60)
         duration_str = f"{int(minutes)}:{int(seconds):02d}"
         
+        # Check if this song will start playing immediately
+        will_play_now = not music_player.is_playing and music_player.voice_client and not music_player.voice_client.is_playing()
+        
         embed = discord.Embed(
-            title="🎵 Added to Queue",
+            title="🎵 Added to Queue" if not will_play_now else "🎵 Now Playing",
             description=f"**{info['title']}**",
             color=discord.Color.green()
         )
         embed.add_field(name="Duration", value=duration_str, inline=True)
-        embed.add_field(name="Position in Queue", value=len(music_player.queue), inline=True)
+        if not will_play_now:
+            embed.add_field(name="Position in Queue", value=len(music_player.queue), inline=True)
         
         if info['thumbnail']:
             embed.set_thumbnail(url=info['thumbnail'])
         
-        await loading_msg.edit(content=None, embed=embed)
+        # Add control buttons if song is playing or will play
+        view = None
+        if will_play_now or music_player.is_playing:
+            view = MusicPlayerControls()
+            await view.update_buttons()
+        
+        await loading_msg.edit(content=None, embed=embed, view=view)
+        
+        # Store control message reference
+        if view:
+            view.control_message = loading_msg
         
     except Exception as e:
         await loading_msg.edit(content=f"❌ An error occurred: {str(e)}")
@@ -418,6 +519,9 @@ async def slash_play(interaction: discord.Interaction, query: str):
             await interaction.followup.send("❌ Could not find the requested song. Please try a different search term or URL.")
             return
         
+        # Check if this song will start playing immediately
+        will_play_now = not music_player.is_playing and music_player.voice_client and not music_player.voice_client.is_playing()
+        
         # Add to queue
         await music_player.add_to_queue(info['url'], info['title'])
         
@@ -427,17 +531,28 @@ async def slash_play(interaction: discord.Interaction, query: str):
         duration_str = f"{int(minutes)}:{int(seconds):02d}"
         
         embed = discord.Embed(
-            title="🎵 Added to Queue",
+            title="🎵 Added to Queue" if not will_play_now else "🎵 Now Playing",
             description=f"**{info['title']}**",
             color=discord.Color.green()
         )
         embed.add_field(name="Duration", value=duration_str, inline=True)
-        embed.add_field(name="Position in Queue", value=len(music_player.queue), inline=True)
+        if not will_play_now:
+            embed.add_field(name="Position in Queue", value=len(music_player.queue), inline=True)
         
         if info['thumbnail']:
             embed.set_thumbnail(url=info['thumbnail'])
         
-        await interaction.followup.send(embed=embed)
+        # Add control buttons if song is playing or will play
+        view = None
+        if will_play_now or music_player.is_playing:
+            view = MusicPlayerControls()
+            await view.update_buttons()
+        
+        msg = await interaction.followup.send(embed=embed, view=view)
+        
+        # Store control message reference
+        if view:
+            view.control_message = msg
         
     except Exception as e:
         await interaction.followup.send(f"❌ An error occurred: {str(e)}")
