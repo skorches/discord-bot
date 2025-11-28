@@ -323,6 +323,9 @@ async def play(ctx, *, query):
             await loading_msg.edit(content="❌ Could not find the requested song. Please try a different search term or URL.")
             return
         
+        # Check if this song will start playing immediately (before adding to queue)
+        will_play_now = not music_player.is_playing and music_player.voice_client and not music_player.voice_client.is_playing()
+        
         # Add to queue
         await music_player.add_to_queue(info['url'], info['title'])
         
@@ -330,9 +333,6 @@ async def play(ctx, *, query):
         duration = info['duration']
         minutes, seconds = divmod(duration, 60)
         duration_str = f"{int(minutes)}:{int(seconds):02d}"
-        
-        # Check if this song will start playing immediately
-        will_play_now = not music_player.is_playing and music_player.voice_client and not music_player.voice_client.is_playing()
         
         embed = discord.Embed(
             title="🎵 Added to Queue" if not will_play_now else "🎵 Now Playing",
@@ -346,17 +346,14 @@ async def play(ctx, *, query):
         if info['thumbnail']:
             embed.set_thumbnail(url=info['thumbnail'])
         
-        # Add control buttons if song is playing or will play
-        view = None
-        if will_play_now or music_player.is_playing:
-            view = MusicPlayerControls()
-            await view.update_buttons()
+        # Always show control buttons when there's music (playing or queued)
+        view = MusicPlayerControls()
+        await view.update_buttons()
         
         await loading_msg.edit(content=None, embed=embed, view=view)
         
         # Store control message reference
-        if view:
-            view.control_message = loading_msg
+        view.control_message = loading_msg
         
     except Exception as e:
         await loading_msg.edit(content=f"❌ An error occurred: {str(e)}")
@@ -519,7 +516,7 @@ async def slash_play(interaction: discord.Interaction, query: str):
             await interaction.followup.send("❌ Could not find the requested song. Please try a different search term or URL.")
             return
         
-        # Check if this song will start playing immediately
+        # Check if this song will start playing immediately (before adding to queue)
         will_play_now = not music_player.is_playing and music_player.voice_client and not music_player.voice_client.is_playing()
         
         # Add to queue
@@ -542,17 +539,14 @@ async def slash_play(interaction: discord.Interaction, query: str):
         if info['thumbnail']:
             embed.set_thumbnail(url=info['thumbnail'])
         
-        # Add control buttons if song is playing or will play
-        view = None
-        if will_play_now or music_player.is_playing:
-            view = MusicPlayerControls()
-            await view.update_buttons()
+        # Always show control buttons when there's music (playing or queued)
+        view = MusicPlayerControls()
+        await view.update_buttons()
         
         msg = await interaction.followup.send(embed=embed, view=view)
         
         # Store control message reference
-        if view:
-            view.control_message = msg
+        view.control_message = msg
         
     except Exception as e:
         await interaction.followup.send(f"❌ An error occurred: {str(e)}")
