@@ -31,7 +31,7 @@ YDL_OPTIONS = {
 
 # FFmpeg options for maximum quality streaming with bass boost and improved stability
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -reconnect_at_eof 1 -rtsp_transport tcp -fflags +genpts+discardcorrupt -err_detect ignore_err',
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -reconnect_at_eof 1 -fflags +genpts+discardcorrupt -err_detect ignore_err',
     'options': '-vn -af "bass=g=8:f=100" -b:a 320k -ar 48000 -ac 2 -bufsize 512k -maxrate 320k'
 }
 
