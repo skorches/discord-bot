@@ -32,7 +32,7 @@ YDL_OPTIONS = {
 # FFmpeg options for maximum quality streaming with bass boost
 FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn -af "bass=g=8:f=100" -b:a 320k -ar 96000 -ac 2'
+    'options': '-vn -af "bass=g=8:f=100" -b:a 320k -ar 48000 -ac 2'
 }
 
 intents = discord.Intents.default()
@@ -520,13 +520,16 @@ async def slash_play(interaction: discord.Interaction, query: str):
     # Defer response IMMEDIATELY (must be within 3 seconds)
     try:
         await interaction.response.defer()
-    except discord.errors.NotFound:
-        # Interaction already expired, try to send followup
-        await interaction.followup.send("⏱️ Interaction expired. Please try the command again.", ephemeral=True)
+    except (discord.errors.NotFound, discord.errors.InteractionResponded):
+        # Interaction already expired or responded to, just return
         return
     
+    # Check voice channel after deferring
     if not interaction.user.voice:
-        await interaction.followup.send("You need to be in a voice channel to use this command!", ephemeral=True)
+        try:
+            await interaction.followup.send("You need to be in a voice channel to use this command!", ephemeral=True)
+        except:
+            pass
         return
     
     # Join voice channel if not already connected
