@@ -21,7 +21,7 @@ YDL_OPTIONS = {
     'logtostderr': False,
     'quiet': True,
     'no_warnings': True,
-    'default_search': 'ytsearch',
+    'default_search': 'ytmsearch',
     'source_address': '0.0.0.0',
     # Get the best quality audio stream URL directly
     'extract_flat': False,
@@ -215,19 +215,34 @@ def get_video_info(query):
         try:
             # If it's not a URL, treat it as a search query
             if not query.startswith(('http://', 'https://', 'www.', 'music.youtube.com')):
-                # Use regular YouTube search (more reliable than ytmsearch)
-                search_query = f"ytsearch:{query}"
+                # Try YouTube Music first for better quality and full-length tracks
+                search_query = f"ytmsearch:{query}"
+                try:
+                    info = ydl.extract_info(search_query, download=False)
+                    # If it's a search result, get the first video
+                    if 'entries' in info:
+                        if info['entries']:
+                            info = info['entries'][0]
+                        else:
+                            raise Exception("No results from YouTube Music")
+                    else:
+                        raise Exception("Invalid response from YouTube Music")
+                except Exception as e:
+                    # Fallback to regular YouTube search if YouTube Music fails
+                    print(f"YouTube Music search failed ({e}), trying regular YouTube search...")
+                    search_query = f"ytsearch:{query}"
+                    info = ydl.extract_info(search_query, download=False)
+                    # If it's a search result, get the first video
+                    if 'entries' in info:
+                        if info['entries']:
+                            info = info['entries'][0]
+                        else:
+                            return None
+                    else:
+                        return None
             else:
                 search_query = query
-            
-            info = ydl.extract_info(search_query, download=False)
-            
-            # If it's a search result, get the first video
-            if 'entries' in info:
-                if info['entries']:
-                    info = info['entries'][0]
-                else:
-                    return None
+                info = ydl.extract_info(search_query, download=False)
             # Get the best audio URL from the format list
             if 'url' in info:
                 audio_url = info['url']
@@ -259,38 +274,6 @@ def get_video_info(query):
             print(f"Error extracting info: {e}")
             import traceback
             traceback.print_exc()
-            # Try fallback to regular YouTube search if YouTube Music failed
-            if not query.startswith(('http://', 'https://', 'www.', 'music.youtube.com')):
-                try:
-                    print(f"Trying fallback YouTube search for: {query}")
-                    search_query = f"ytsearch:{query}"
-                    info = ydl.extract_info(search_query, download=False)
-                    if 'entries' in info and info['entries']:
-                        info = info['entries'][0]
-                        # Continue with normal processing
-                        if 'url' in info:
-                            audio_url = info['url']
-                        elif 'formats' in info:
-                            formats = info.get('formats', [])
-                            audio_formats = [f for f in formats if f.get('acodec') != 'none' and f.get('vcodec') == 'none']
-                            if audio_formats:
-                                audio_formats.sort(key=lambda x: x.get('abr', 0) or x.get('tbr', 0), reverse=True)
-                                audio_url = audio_formats[0]['url']
-                            else:
-                                best_format = formats[0] if formats else None
-                                audio_url = best_format['url'] if best_format else None
-                        else:
-                            audio_url = None
-                        
-                        if audio_url:
-                            return {
-                                'url': audio_url,
-                                'title': info.get('title', 'Unknown'),
-                                'duration': info.get('duration', 0),
-                                'thumbnail': info.get('thumbnail', '')
-                            }
-                except Exception as e2:
-                    print(f"Fallback search also failed: {e2}")
             return None
 
 
