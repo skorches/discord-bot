@@ -162,15 +162,22 @@ def get_video_info(url):
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user} has connected to Discord!')
-    print(f'Bot is in {len(bot.guilds)} guild(s)')
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f"{PREFIX}help"))
-    # Sync slash commands
     try:
-        synced = await tree.sync()
-        print(f'Synced {len(synced)} slash command(s)')
+        print(f'{bot.user} has connected to Discord!')
+        print(f'Bot is in {len(bot.guilds)} guild(s)')
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=f"{PREFIX}help"))
+        # Sync slash commands
+        try:
+            synced = await tree.sync()
+            print(f'Synced {len(synced)} slash command(s)')
+        except Exception as e:
+            print(f'Failed to sync slash commands: {e}')
+            import traceback
+            traceback.print_exc()
     except Exception as e:
-        print(f'Failed to sync slash commands: {e}')
+        print(f'Error in on_ready: {e}')
+        import traceback
+        traceback.print_exc()
 
 
 @bot.command(name='join', aliases=['j', 'connect'])
