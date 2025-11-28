@@ -123,11 +123,22 @@ class MusicPlayer:
 music_player = MusicPlayer()
 
 
-def get_video_info(url):
+def get_video_info(query):
     """Extract video information using yt-dlp"""
     with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
         try:
-            info = ydl.extract_info(url, download=False)
+            # If it's not a URL, treat it as a search query
+            if not query.startswith(('http://', 'https://', 'www.')):
+                query = f"ytsearch:{query}"
+            
+            info = ydl.extract_info(query, download=False)
+            
+            # If it's a search result, get the first video
+            if 'entries' in info:
+                if info['entries']:
+                    info = info['entries'][0]
+                else:
+                    return None
             # Get the best audio URL from the format list
             if 'url' in info:
                 audio_url = info['url']
