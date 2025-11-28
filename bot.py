@@ -27,10 +27,10 @@ YDL_OPTIONS = {
     'extract_flat': False,
 }
 
-# FFmpeg options for high-quality streaming
+# FFmpeg options for maximum quality streaming
 FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn -b:a 192k -ar 48000'
+    'options': '-vn -b:a 320k -ar 48000'
 }
 
 intents = discord.Intents.default()
