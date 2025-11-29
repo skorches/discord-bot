@@ -73,3 +73,4 @@ If you still see the error after enabling intents:
 3. **Check bot permissions** - Make sure bot has proper permissions in your server
 4. **Restart the container** - `docker-compose restart`
 
+

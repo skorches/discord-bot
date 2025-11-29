@@ -25,3 +25,4 @@ USER botuser
 # Run the bot
 CMD ["python", "bot.py"]
 
+
