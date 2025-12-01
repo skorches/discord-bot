@@ -29,10 +29,10 @@ YDL_OPTIONS = {
     'prefer_ffmpeg': True,
 }
 
-# FFmpeg options for refined audio quality with optimized buffer
+# FFmpeg options optimized for stability
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -reconnect_at_eof 1 -fflags +genpts+discardcorrupt -err_detect ignore_err -timeout 5000000',
-    'options': '-vn -af "bass=g=3:f=80,treble=g=1,volume=0.95" -b:a 256k -ar 48000 -ac 2 -bufsize 768k -maxrate 256k'
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'options': '-vn -b:a 256k -ar 48000 -ac 2 -bufsize 512k'
 }
 
 intents = discord.Intents.default()
