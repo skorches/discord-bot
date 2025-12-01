@@ -74,3 +74,5 @@ If you still see the error after enabling intents:
 4. **Restart the container** - `docker-compose restart`
 
 
+
+
